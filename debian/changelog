@@ -1,5 +1,71 @@
-template-repository (1.0-1) unstable; urgency=medium
+libdecor-0 (0.1.1-2) unstable; urgency=medium
 
-  * Initial release
+  [ Christian Rauch ]
+  * Update URLs to new upstream repo on the freedesktop.org GitLab instance
 
- -- Tsic404 <liuheng@deepin.org>  Sat, 28 Jan 2023 13:46:49 +0800
+  [ Simon McVittie ]
+  * d/upstream/metadata: Canonicalize Gitlab URLs
+  * d/p/libecor-make-getter-for-min-max-limits-public.patch,
+    d/p/debian/libdecor-0-0.symbols.in:
+    Add patch from upstream to promote two symbols from plugin-only to
+    public (API only, no ABI change).
+    SDL 2.27.x snapshots want to use these.
+  * d/.gitignore: Add
+  * Update standards version to 4.6.2 (no changes needed)
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 08 Feb 2023 20:01:25 +0000
+
+libdecor-0 (0.1.1-1) unstable; urgency=medium
+
+  [ Christian Rauch ]
+  * New upstream release
+    - Drop all patches, included in the upstream release
+  * Update private symbols
+
+  [ Simon McVittie ]
+  * Distinguish between public and private symbols.
+    To do this, generate the .symbols file from a template, so that the
+    private symbols generate a lockstep dependency on the current binary
+    version.
+  * Update autopkgtest.
+    Now that more symbols used in the demo programs are auto-discovered,
+    the autopkgtest needs to copy config.h from a libdecor build.
+  * Standards-Version: 4.6.1 (no changes required)
+
+  [ Debian Janitor ]
+  * Remove constraints unnecessary since buster
+    - Build-Depends: Drop versioned constraint on meson and
+      wayland-protocols
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 01 Nov 2022 22:22:04 +0000
+
+libdecor-0 (0.1.0-3) unstable; urgency=medium
+
+  * d/control: Add Vcs-Git, Vcs-Browser
+  * Set Rules-Requires-Root to no
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 14 Dec 2021 16:10:27 +0000
+
+libdecor-0 (0.1.0-2) unstable; urgency=medium
+
+  * Mark all patches as applied upstream
+  * d/patches: Add some more bug fixes from upstream
+    - This requires a build-dependency on libopengl-dev when building
+      the manual tests
+  * Use https format URI in copyright file
+  * d/upstream/metadata: Add
+  * Standards-Version: 4.6.0 (no changes needed)
+  * Upload to unstable
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 06 Nov 2021 16:23:30 +0000
+
+libdecor-0 (0.1.0-1) experimental; urgency=medium
+
+  [ Christian Rauch ]
+  * Initial release (Closes: #988116)
+
+  [ Simon McVittie ]
+  * d/control: Set Maintainer to the SDL team
+  * Various packaging and test improvements
+
+ -- Simon McVittie <smcv@debian.org>  Wed, 11 Aug 2021 16:06:55 +0100

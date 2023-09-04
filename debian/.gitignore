@@ -1,0 +1,11 @@
+/*.debhelper.log
+/*.substvars
+/.debhelper/
+/debhelper-build-stamp
+/files
+/libdecor-0-0.symbols
+/libdecor-0-0/
+/libdecor-0-dev/
+/libdecor-0-plugin-1-cairo/
+/libdecor-tests/
+/tmp/
