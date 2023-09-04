@@ -1,4 +1,39 @@
 #!/usr/bin/make -f
+#export DH_VERBOSE = 1
+#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+#export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+export DEB_BUILD_MAINT_OPTIONS = hardening=+bindnow
+
+include /usr/share/dpkg/default.mk
+
+lib = libdecor-0-0
 
 %:
 	dh $@
+
+debian/$(lib).symbols: debian/$(lib).symbols.in
+	sed -e 's/[$$]{DEB_VERSION}/${DEB_VERSION}/g' \
+		< $< > $@
+
+built_binaries := $(shell dh_listpackages)
+configure_options =
+
+ifneq ($(filter libdecor-tests,$(built_binaries)),)
+configure_options += -Ddemo=true
+configure_options += -Dinstall_demo=true
+else
+configure_options += -Ddemo=false
+endif
+
+override_dh_auto_configure:
+	dh_auto_configure -- $(configure_options)
+
+ifeq ($(DEB_DISTRIBUTION),UNRELEASED)
+# We can't expect the symbols file to be fully up to date for a snapshot,
+# so only fail if we broke ABI. This overrides the -c4 below.
+export DPKG_GENSYMBOLS_CHECK_LEVEL = 1
+endif
+
+override_dh_makeshlibs: debian/$(lib).symbols
+	dh_makeshlibs -- -c4
