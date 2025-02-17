@@ -1,8 +1,56 @@
-libdecor-0 (0.1.1-2deepin0) unstable; urgency=medium
+libdecor-0 (0.2.2-2) unstable; urgency=medium
 
-  * No source change upload against GCC 12.
+  [ Patrice Duroux ]
+  * d/watch: Update for current Gitlab web interface
 
- -- Tianyu Chen <sweetyfish@deepin.org>  Thu, 19 Sep 2024 22:53:27 +0800
+  [ Simon McVittie ]
+  * d/watch: Use git to download new versions.
+    The Gitlab web interface no longer provides archive tarballs in a
+    conveniently machine-usable way. (Closes: #1081059)
+  * Remove version constraints that were unnecessary since Debian 11
+  * Standards-Version: 4.7.0 (no changes required)
+  * d/control, d/tests: Replace transitional pkg-config with pkgconf
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 19 Nov 2024 12:03:56 +0000
+
+libdecor-0 (0.2.2-1) unstable; urgency=medium
+
+  * New upstream release
+  * d/copyright: Update
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 16 Jan 2024 17:36:11 +0000
+
+libdecor-0 (0.2.1-1) unstable; urgency=medium
+
+  * New upstream release
+
+ -- Simon McVittie <smcv@debian.org>  Thu, 07 Dec 2023 10:06:32 +0000
+
+libdecor-0 (0.2.0-1) unstable; urgency=medium
+
+  * New upstream release, functionally equivalent to 0.1.99~git20230907-1
+  * Revert "d/gbp.conf: Branch for debian/snapshots, upstream/snapshots
+    branches"
+  * Release to unstable
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 26 Sep 2023 17:35:34 +0100
+
+libdecor-0 (0.1.99~git20230907-1) experimental; urgency=medium
+
+  * New upstream git snapshot, similar to upcoming 0.2.0 release
+  * d/p/libecor-make-getter-for-min-max-limits-public.patch:
+    Drop patch, included in the upstream snapshot
+  * d/copyright: Update
+  * d/control: Add libdecor-0-plugin-1-gtk and install it by default.
+    The -cairo plugin is still available, but doesn't match any application
+    toolkits, while the new -gtk plugin matches GTK applications.
+  * d/tests/run-with-display: Use absolute path to WAYLAND_DISPLAY socket.
+    This means we can still use the Wayland display, even if dh_auto_test
+    changes our XDG_RUNTIME_DIR.
+  * d/gbp.conf: Branch for debian/snapshots, upstream/snapshots branches
+  * Upload to experimental for NEW processing
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 19 Sep 2023 12:18:54 +0100
 
 libdecor-0 (0.1.1-2) unstable; urgency=medium
 

@@ -37,7 +37,7 @@ cd "$WORKDIR"
     os-compatibility.c \
     xdg-shell-protocol.c \
     -o test \
-    $("${CROSS_COMPILE}pkg-config" \
+    $("${CROSS_COMPILE}pkgconf" \
         --cflags \
         --libs \
         dbus-1 \

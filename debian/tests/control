@@ -6,6 +6,6 @@ Depends:
  libdecor-0-dev,
  libwayland-dev,
  libxkbcommon-dev,
- pkg-config,
+ pkgconf,
  wayland-protocols,
  weston,

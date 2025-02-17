@@ -72,6 +72,7 @@ cursor_settings = static_library('cursor_settings',
   sources: ['cursor-settings.c'],
   include_directories: [top_includepath],
   dependencies: [dbus_dep],
+  gnu_symbol_visibility: 'hidden',
 )
 
 cursor_settings_dep = declare_dependency(
@@ -83,6 +84,7 @@ cursor_settings_dep = declare_dependency(
 os_compatibility = static_library('os_compatibility',
   sources: ['os-compatibility.c'],
   include_directories: [top_includepath],
+  gnu_symbol_visibility: 'hidden',
 )
 
 os_compatibility_dep = declare_dependency(
@@ -98,7 +100,7 @@ libdecor = shared_library(libdecor_name,
   soversion: libdecor_soversion,
   version: libdecor_libversion,
   include_directories: libdecor_includes,
-  c_args: libdecor_c_args,
+  gnu_symbol_visibility: 'hidden',
   dependencies: [
     wayland_client_dep,
     dl_dep,
@@ -109,6 +111,9 @@ libdecor = shared_library(libdecor_name,
 
 libdecor_dep = declare_dependency(
   link_with: libdecor,
+  include_directories: [
+    libdecor_includepath,
+  ],
   dependencies: [
     wayland_client_dep,
   ],

@@ -1,9 +1,8 @@
-pangocairo_dep = dependency('pangocairo')
 wayland_cursor_dep = dependency('wayland-cursor')
 
-shared_module('decor-cairo',
+shared_module('decor-gtk',
   sources: [
-    'libdecor-cairo.c',
+    'libdecor-gtk.c',
   ],
   include_directories: [
     top_includepath,
@@ -13,10 +12,12 @@ shared_module('decor-cairo',
   gnu_symbol_visibility: 'hidden',
   dependencies: [
     libdecor_dep,
-    pangocairo_dep,
+    cairo_dep,
+    math_dep,
     wayland_cursor_dep,
     cursor_settings_dep,
     os_compatibility_dep,
+    gtk_dep,
   ],
   link_with: plugin_common,
   install_dir: join_paths(plugindir),

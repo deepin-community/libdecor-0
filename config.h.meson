@@ -12,3 +12,5 @@
 #mesondefine HAVE_MKOSTEMP
 #mesondefine HAVE_POSIX_FALLOCATE
 #mesondefine HAVE_MEMFD_CREATE
+
+#mesondefine HAVE_XDG_SHELL_V6
