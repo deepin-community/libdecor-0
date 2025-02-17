@@ -6,7 +6,7 @@ shared_module('decor-dummy',
     top_includepath,
     libdecor_includepath,
   ],
-  c_args: libdecor_c_args,
+  gnu_symbol_visibility: 'hidden',
   dependencies: [
     libdecor_dep,
   ],

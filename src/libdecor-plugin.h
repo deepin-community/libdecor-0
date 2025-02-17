@@ -1,6 +1,7 @@
 /*
  * Copyright © 2017-2018 Red Hat Inc.
  * Copyright © 2018 Jonas Ådahl
+ * Copyright © 2019 Christian Rauch
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -79,6 +80,9 @@ struct libdecor_plugin_description {
 
 	/* Vfunc used for constructing a plugin instance. */
 	libdecor_plugin_constructor constructor;
+
+	/* NULL terminated list of incompatible symbols. */
+	char *conflicting_symbols[1024];
 };
 
 struct libdecor_plugin_interface {
@@ -175,21 +179,5 @@ libdecor_plugin_init(struct libdecor_plugin *plugin,
 
 void
 libdecor_plugin_release(struct libdecor_plugin *plugin);
-
-/*
- * Get the min content size as set before with libdecor_frame_set_min_content_size().
- */
-void
-libdecor_frame_get_min_content_size(struct libdecor_frame *frame,
-				    int *content_width,
-				    int *content_height);
-
-/*
- * Get the max content size as set before with libdecor_frame_set_max_content_size().
- */
-void
-libdecor_frame_get_max_content_size(struct libdecor_frame *frame,
-				    int *content_width,
-				    int *content_height);
 
 #endif /* LIBDECOR_PLUGIN_H */

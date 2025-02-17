@@ -1,6 +1,6 @@
 project('libdecor', 'c',
-  version: '0.1.1',
-  meson_version: '>= 0.47.0',
+  version: '0.2.2',
+  meson_version: '>= 0.49.0',
   license: 'MIT',
   default_options: [
     'c_std=c99',
@@ -67,10 +67,6 @@ pkglibdir = join_paths(libdir, pkgname)
 
 plugindir = join_paths(pkglibdir, 'plugins-@0@'.format(plugin_api_version_string))
 
-libdecor_c_args = [
-  '-fvisibility=hidden',
-]
-
 cdata = configuration_data()
 cdata.set_quoted('VERSION', meson.project_version())
 cdata.set_quoted('LIBDECOR_PLUGIN_DIR', plugindir)
@@ -87,6 +83,10 @@ if cc.has_function('posix_fallocate', prefix: '#define _GNU_SOURCE\n#include <fc
 endif
 if cc.has_function('memfd_create', prefix: '#define _GNU_SOURCE\n#include <sys/mman.h>')
   cdata.set('HAVE_MEMFD_CREATE', true)
+endif
+
+if wayland_protocols_dep.version().version_compare('>=1.32')
+  cdata.set('HAVE_XDG_SHELL_V6', true)
 endif
 
 config_h = configure_file(

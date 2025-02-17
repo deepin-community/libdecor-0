@@ -2,6 +2,7 @@
  * Copyright © 2011 Benjamin Franzke
  * Copyright © 2010 Intel Corporation
  * Copyright © 2018 Jonas Ådahl
+ * Copyright © 2019 Christian Rauch
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -80,6 +81,9 @@ own_proxy(struct wl_proxy *proxy)
 static bool
 own_output(struct wl_output *output)
 {
+	if (!output)
+		return false;
+
 	return own_proxy((struct wl_proxy *) output);
 }
 
@@ -166,6 +170,27 @@ static void
 redraw(struct window *window);
 
 static void
+constrain_content_size(const struct libdecor_frame *frame,
+		       int *width,
+		       int *height)
+{
+	int min_width, min_height, max_width, max_height;
+
+	libdecor_frame_get_min_content_size(frame, &min_width, &min_height);
+	libdecor_frame_get_max_content_size(frame, &max_width, &max_height);
+
+	if (min_width > 0)
+		*width = MAX(min_width, *width);
+	if (max_width > 0)
+		*width = MIN(*width, max_width);
+
+	if (min_height > 0)
+		*height = MAX(min_height, *height);
+	if (max_height > 0)
+		*height = MIN(*height, max_height);
+}
+
+static void
 resize(struct window *window, int width, int height)
 {
 	struct libdecor_state *state;
@@ -174,6 +199,8 @@ resize(struct window *window, int width, int height)
 		printf("... ignoring in non-floating mode\n");
 		return;
 	}
+
+	constrain_content_size(window->frame, &width, &height);
 
 	/* commit changes to decorations */
 	state = libdecor_state_new(width, height);
@@ -1094,6 +1121,13 @@ handle_configure(struct libdecor_frame *frame,
 	enum libdecor_window_state window_state;
 	struct libdecor_state *state;
 
+	/* Update window state first for the correct calculations */
+	if (!libdecor_configuration_get_window_state(configuration,
+						     &window_state))
+		window_state = LIBDECOR_WINDOW_STATE_NONE;
+
+	window->window_state = window_state;
+
 	if (!libdecor_configuration_get_content_size(configuration, frame,
 						     &width, &height)) {
 		width = window->content_width;
@@ -1105,12 +1139,6 @@ handle_configure(struct libdecor_frame *frame,
 
 	window->configured_width = width;
 	window->configured_height = height;
-
-	if (!libdecor_configuration_get_window_state(configuration,
-						     &window_state))
-		window_state = LIBDECOR_WINDOW_STATE_NONE;
-
-	window->window_state = window_state;
 
 	state = libdecor_state_new(width, height);
 	libdecor_frame_commit(frame, state, configuration);
@@ -1184,6 +1212,9 @@ surface_leave(void *data,
 {
 	struct window *window = data;
 	struct window_output *window_output;
+
+	if (!own_output(wl_output))
+		return;
 
 	wl_list_for_each(window_output, &window->outputs, link) {
 		if (window_output->output->wl_output == wl_output) {

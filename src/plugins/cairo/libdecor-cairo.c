@@ -1,5 +1,6 @@
 /*
  * Copyright © 2018 Jonas Ådahl
+ * Copyright © 2019 Christian Rauch
  *
  * Permission is hereby granted, free of charge, to any person obtaining
  * a copy of this software and associated documentation files (the
@@ -44,7 +45,7 @@
 #include <cairo/cairo.h>
 #include <pango/pangocairo.h>
 
-#include "libdecor-cairo-blur.h"
+#include "common/libdecor-cairo-blur.h"
 
 static const size_t SHADOW_MARGIN = 24;	/* graspable part of the border */
 static const size_t TITLE_HEIGHT = 24;
@@ -295,6 +296,9 @@ synthesize_pointer_leave(struct seat *seat);
 static bool
 own_proxy(struct wl_proxy *proxy)
 {
+	if (!proxy)
+		return false;
+
 	return (wl_proxy_get_tag(proxy) == &libdecor_cairo_proxy_tag);
 }
 
@@ -386,7 +390,11 @@ libdecor_plugin_cairo_destroy(struct libdecor_plugin *plugin)
 
 	wl_list_for_each_safe(output, output_tmp,
 			      &plugin_cairo->output_list, link) {
-		wl_output_destroy(output->wl_output);
+		if (wl_output_get_version (output->wl_output) >=
+		    WL_OUTPUT_RELEASE_SINCE_VERSION)
+			wl_output_release(output->wl_output);
+		else
+			wl_output_destroy(output->wl_output);
 		free(output);
 	}
 
@@ -397,12 +405,15 @@ libdecor_plugin_cairo_destroy(struct libdecor_plugin *plugin)
 
 	free(plugin_cairo->cursor_theme_name);
 
-	wl_shm_destroy(plugin_cairo->wl_shm);
+	if (plugin_cairo->wl_shm)
+		wl_shm_destroy(plugin_cairo->wl_shm);
 
 	pango_font_description_free(plugin_cairo->font);
 
-	wl_compositor_destroy(plugin_cairo->wl_compositor);
-	wl_subcompositor_destroy(plugin_cairo->wl_subcompositor);
+	if (plugin_cairo->wl_compositor)
+		wl_compositor_destroy(plugin_cairo->wl_compositor);
+	if (plugin_cairo->wl_subcompositor)
+		wl_subcompositor_destroy(plugin_cairo->wl_subcompositor);
 
 	libdecor_plugin_release(&plugin_cairo->plugin);
 	free(plugin_cairo);
@@ -996,17 +1007,24 @@ ensure_component(struct libdecor_frame_cairo *frame_cairo,
 static void
 ensure_border_surfaces(struct libdecor_frame_cairo *frame_cairo)
 {
-	int min_width, min_height;
+	int min_width, min_height, current_max_w, current_max_h;
 
 	frame_cairo->shadow.opaque = false;
 	ensure_component(frame_cairo, &frame_cairo->shadow);
 
 	libdecor_frame_get_min_content_size(&frame_cairo->frame,
 					    &min_width, &min_height);
-	libdecor_frame_set_min_content_size(&frame_cairo->frame,
-		MAX(min_width, (int)MAX(56, 4 * BUTTON_WIDTH)),
-		MAX(min_height, (int)MAX(56, TITLE_HEIGHT + 1)));
+	min_width = MAX(min_width, (int)MAX(56, 4 * BUTTON_WIDTH));
+	min_height = MAX(min_height, (int)MAX(56, TITLE_HEIGHT + 1));
+	libdecor_frame_set_min_content_size(&frame_cairo->frame, min_width, min_height);
+	libdecor_frame_get_max_content_size(&frame_cairo->frame, &current_max_w, 
+		&current_max_h);
+	if (current_max_w && current_max_w < min_width) current_max_w = min_width;
+	if (current_max_h && current_max_h < min_height) current_max_h = min_height;
+	libdecor_frame_set_max_content_size(&frame_cairo->frame, current_max_w, 
+		current_max_h);
 }
+
 
 static void
 ensure_title_bar_surfaces(struct libdecor_frame_cairo *frame_cairo)
@@ -2056,10 +2074,10 @@ component_edge(const struct border_component *cmpnt,
 	       const int pointer_y,
 	       const int margin)
 {
-	const bool top = pointer_y < margin;
-	const bool bottom = pointer_y > (cmpnt->server.buffer->height - margin);
-	const bool left = pointer_x < margin;
-	const bool right = pointer_x > (cmpnt->server.buffer->width - margin);
+	const bool top = pointer_y < margin * 2;
+	const bool bottom = pointer_y > (cmpnt->server.buffer->height - margin * 2);
+	const bool left = pointer_x < margin * 2;
+	const bool right = pointer_x > (cmpnt->server.buffer->width - margin * 2);
 
 	if (top)
 		if (left)
@@ -2559,7 +2577,8 @@ init_wl_output(struct libdecor_plugin_cairo *plugin_cairo,
 	output->id = id;
 	output->wl_output =
 		wl_registry_bind(plugin_cairo->wl_registry,
-				 id, &wl_output_interface, 2);
+				 id, &wl_output_interface,
+				 MIN (version, 3));
 	wl_proxy_set_tag((struct wl_proxy *) output->wl_output,
 			 &libdecor_cairo_proxy_tag);
 	wl_output_add_listener(output->wl_output, &output_listener, output);
@@ -2671,13 +2690,6 @@ globals_callback(void *user_data,
 
 	wl_callback_destroy(callback);
 	plugin_cairo->globals_callback = NULL;
-
-	if (!has_required_globals(plugin_cairo)) {
-		libdecor_notify_plugin_error(
-				plugin_cairo->context,
-				LIBDECOR_ERROR_COMPOSITOR_INCOMPATIBLE,
-				"Compositor is missing required globals");
-	}
 }
 
 static const struct wl_callback_listener globals_callback_listener = {
@@ -2711,7 +2723,7 @@ libdecor_plugin_new(struct libdecor *context)
 	plugin_cairo->font = pango_font_description_new();
 	pango_font_description_set_family(plugin_cairo->font, "sans");
 	pango_font_description_set_weight(plugin_cairo->font, PANGO_WEIGHT_BOLD);
-	pango_font_description_set_size(plugin_cairo->font, SYM_DIM * PANGO_SCALE);
+	pango_font_description_set_absolute_size(plugin_cairo->font, SYM_DIM * PANGO_SCALE);
 
 	wl_display = libdecor_get_wl_display(context);
 	plugin_cairo->wl_registry = wl_display_get_registry(wl_display);
@@ -2723,6 +2735,13 @@ libdecor_plugin_new(struct libdecor *context)
 	wl_callback_add_listener(plugin_cairo->globals_callback,
 				 &globals_callback_listener,
 				 plugin_cairo);
+	wl_display_roundtrip(wl_display);
+
+	if (!has_required_globals(plugin_cairo)) {
+		fprintf(stderr, "libdecor-cairo-WARNING: Could not get required globals\n");
+		libdecor_plugin_cairo_destroy(&plugin_cairo->plugin);
+		return NULL;
+	}
 
 	return &plugin_cairo->plugin;
 }
