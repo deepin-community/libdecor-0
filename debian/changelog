@@ -1,3 +1,49 @@
+libdecor-0 (0.2.5-1) unstable; urgency=medium
+
+  * New upstream release
+  * Standards-Version: 4.7.3 (no changes required)
+  * d/control: Remove unnecessary Priority, Rules-Requires-Root fields
+
+ -- Simon McVittie <smcv@debian.org>  Sat, 27 Dec 2025 17:00:26 +0000
+
+libdecor-0 (0.2.4-1) unstable; urgency=medium
+
+  * New upstream release
+  * d/watch: Convert to uscan format v5
+  * Reformat packaging (debputy reformat)
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 28 Oct 2025 23:37:34 +0000
+
+libdecor-0 (0.2.3-3) unstable; urgency=medium
+
+  * d/libdecor-0-0.symbols.in: Don't generate lockstep dependencies for
+    all private symbols.
+    libfltk1.4 uses libdecor_frame_get_content_height and _width, even
+    though they are meant to be private to in-tree libdecor plugins
+    (see #1111540), resulting in a lockstep dependency that prevents
+    libdecor from migrating to testing.
+    Their ABI is unlikely to change in practice, so generate ordinary
+    dependencies for them. If they're changed or removed, we'll have to
+    add versioned Breaks on older libfltk1.4.
+
+ -- Simon McVittie <smcv@debian.org>  Tue, 19 Aug 2025 11:10:02 +0100
+
+libdecor-0 (0.2.3-2) unstable; urgency=medium
+
+  * Rebuild for unstable
+
+ -- Simon McVittie <smcv@debian.org>  Sun, 10 Aug 2025 11:32:23 +0100
+
+libdecor-0 (0.2.3-1) experimental; urgency=medium
+
+  * New upstream release
+  * Adjust autopkgtest for internal changes to the demo program
+  * d/copyright: Update
+  * Standards-Version: 4.7.2 (no changes required)
+  * Release to experimental during Debian 13 freeze
+
+ -- Simon McVittie <smcv@debian.org>  Fri, 16 May 2025 09:49:11 +0100
+
 libdecor-0 (0.2.2-2) unstable; urgency=medium
 
   [ Patrice Duroux ]

@@ -1,10 +1,10 @@
 Source: libdecor-0
+X-Style: black
 Section: x11
-Priority: optional
 Maintainer: Debian SDL packages maintainers <pkg-sdl-maintainers@lists.alioth.debian.org>
 Uploaders:
  Christian Rauch <Rauch.Christian@gmx.de>,
- Simon McVittie <smcv@debian.org>
+ Simon McVittie <smcv@debian.org>,
 Build-Depends:
  debhelper-compat (= 13),
  libcairo2-dev,
@@ -19,8 +19,7 @@ Build-Depends:
  meson,
  pkgconf,
  wayland-protocols,
-Rules-Requires-Root: no
-Standards-Version: 4.7.0
+Standards-Version: 4.7.3
 Homepage: https://gitlab.freedesktop.org/libdecor/libdecor
 Vcs-Git: https://salsa.debian.org/sdl-team/libdecor-0.git
 Vcs-Browser: https://salsa.debian.org/sdl-team/libdecor-0

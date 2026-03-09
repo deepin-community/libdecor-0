@@ -1,5 +1,5 @@
 project('libdecor', 'c',
-  version: '0.2.2',
+  version: '0.2.5',
   meson_version: '>= 0.49.0',
   license: 'MIT',
   default_options: [
@@ -83,6 +83,9 @@ if cc.has_function('posix_fallocate', prefix: '#define _GNU_SOURCE\n#include <fc
 endif
 if cc.has_function('memfd_create', prefix: '#define _GNU_SOURCE\n#include <sys/mman.h>')
   cdata.set('HAVE_MEMFD_CREATE', true)
+endif
+if cc.has_function('gettid', prefix: '#define _GNU_SOURCE\n#include <unistd.h>')
+  cdata.set('HAVE_GETTID', true)
 endif
 
 if wayland_protocols_dep.version().version_compare('>=1.32')

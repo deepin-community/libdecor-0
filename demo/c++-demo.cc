@@ -41,7 +41,7 @@
 
 #include "libdecor.h"
 #include "utils.h"
-#include "cursor-settings.h"
+#include "desktop-settings.h"
 extern "C" {
 #include "os-compatibility.h"
 }
@@ -94,7 +94,7 @@ public:
 		stride = width * 4;
 		size = stride * height;
 
-		fd = os_create_anonymous_file(size);
+		fd = libdecor_os_create_anonymous_file(size);
 		if (fd < 0) {
 			cerr << "Creating a buffer file for " << size <<
 				" B failed: " << strerror(errno) << endl;

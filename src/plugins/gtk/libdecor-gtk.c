@@ -38,7 +38,7 @@
 
 #include "libdecor-plugin.h"
 #include "utils.h"
-#include "cursor-settings.h"
+#include "desktop-settings.h"
 #include "os-compatibility.h"
 
 #include <cairo/cairo.h>
@@ -322,6 +322,8 @@ struct libdecor_plugin_gtk {
 	char *cursor_theme_name;
 	int cursor_size;
 
+	uint32_t color_scheme_setting;
+
 	int double_click_time_ms;
 };
 
@@ -595,7 +597,7 @@ create_shm_buffer(struct libdecor_plugin_gtk *plugin_gtk,
 	stride = buffer_width * 4;
 	size = stride * buffer_height;
 
-	fd = os_create_anonymous_file(size);
+	fd = libdecor_os_create_anonymous_file(size);
 	if (fd < 0) {
 		fprintf(stderr, "creating a buffer file for %d B failed: %s\n",
 			size, strerror(errno));
@@ -740,7 +742,8 @@ redraw_scale(struct libdecor_frame_gtk *frame_gtk,
 	}
 	if (scale != cmpnt->scale) {
 		cmpnt->scale = scale;
-		if ((cmpnt->type != SHADOW) || is_border_surfaces_showing(frame_gtk)) {
+		if ((frame_gtk->decoration_type != DECORATION_TYPE_NONE) &&
+		    ((cmpnt->type != SHADOW) || is_border_surfaces_showing(frame_gtk))) {
 			draw_border_component(frame_gtk, cmpnt, cmpnt->type);
 			return true;
 		}
@@ -891,6 +894,11 @@ ensure_title_bar_surfaces(struct libdecor_frame_gtk *frame_gtk)
 	frame_gtk->headerbar.type = HEADER;
 	frame_gtk->headerbar.opaque = false;
 	ensure_component(frame_gtk, &frame_gtk->headerbar);
+
+	if (frame_gtk->shadow.wl_surface) {
+		wl_subsurface_place_above(frame_gtk->headerbar.wl_subsurface,
+					  frame_gtk->shadow.wl_surface);
+	}
 
 	/* create an offscreen window with a header bar */
 	/* TODO: This should only be done once at frame consutrction, but then
@@ -1726,6 +1734,8 @@ libdecor_plugin_gtk_frame_get_border_size(struct libdecor_plugin *plugin,
 					  int *top,
 					  int *bottom)
 {
+	struct libdecor_frame_gtk *frame_gtk =
+		(struct libdecor_frame_gtk *) frame;
 	enum libdecor_window_state window_state;
 
 	if (configuration) {
@@ -1743,17 +1753,21 @@ libdecor_plugin_gtk_frame_get_border_size(struct libdecor_plugin *plugin,
 	if (bottom)
 		*bottom = 0;
 	if (top) {
-		GtkWidget *header = ((struct libdecor_frame_gtk *)frame)->header;
 		enum decoration_type type = window_state_to_decoration_type(window_state);
 
-		/* avoid warnings after decoration has been turned off */
-		if (GTK_IS_WIDGET(header) && (type != DECORATION_TYPE_NONE)) {
-			/* Redraw title bar to ensure size will be up-to-date */
-			if (configuration && type == DECORATION_TYPE_TITLE_ONLY)
-				draw_title_bar((struct libdecor_frame_gtk *) frame);
-			*top = gtk_widget_get_allocated_height(header);
-		} else {
+		switch (type) {
+		case DECORATION_TYPE_NONE:
 			*top = 0;
+			break;
+		case DECORATION_TYPE_ALL:
+			ensure_border_surfaces(frame_gtk);
+			G_GNUC_FALLTHROUGH;
+		case DECORATION_TYPE_TITLE_ONLY:
+			if (!frame_gtk->header)
+				ensure_title_bar_surfaces(frame_gtk);
+			gtk_widget_show_all(frame_gtk->window);
+			gtk_widget_get_preferred_height(frame_gtk->header, NULL, top);
+			break;
 		}
 	}
 
@@ -2772,6 +2786,12 @@ libdecor_plugin_new(struct libdecor *context)
 	struct libdecor_plugin_gtk *plugin_gtk;
 	struct wl_display *wl_display;
 
+#ifdef HAVE_GETTID
+	/* Only support running on the main thread. */
+	if (getpid () != gettid ())
+		return NULL;
+#endif
+
 	plugin_gtk = zalloc(sizeof *plugin_gtk);
 	libdecor_plugin_init(&plugin_gtk->plugin,
 			     context,
@@ -2788,6 +2808,8 @@ libdecor_plugin_new(struct libdecor *context)
 		plugin_gtk->cursor_theme_name = NULL;
 		plugin_gtk->cursor_size = 24;
 	}
+
+	plugin_gtk->color_scheme_setting = libdecor_get_color_scheme();
 
 	wl_display = libdecor_get_wl_display(context);
 	plugin_gtk->wl_registry = wl_display_get_registry(wl_display);
@@ -2817,6 +2839,11 @@ libdecor_plugin_new(struct libdecor *context)
 		return NULL;
 	}
 
+	g_object_set(gtk_settings_get_default(),
+		     "gtk-application-prefer-dark-theme",
+		     plugin_gtk->color_scheme_setting == LIBDECOR_COLOR_SCHEME_PREFER_DARK,
+		     NULL);
+
 	return &plugin_gtk->plugin;
 }
 
@@ -2833,6 +2860,7 @@ libdecor_plugin_description = {
 	.constructor = libdecor_plugin_new,
 	.conflicting_symbols = {
 		"png_free",
+		"gdk_get_use_xshm",
 		NULL,
 	},
 };

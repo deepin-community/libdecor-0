@@ -1,4 +1,4 @@
-add_languages('cpp')
+add_languages('cpp', native: false)
 
 wayland_cursor_dep = dependency('wayland-cursor')
 
@@ -44,7 +44,7 @@ executable('libdecor-demo',
   dependencies: [
     libdecor_dep,
     wayland_cursor_dep,
-    cursor_settings_dep,
+    desktop_settings_dep,
     os_compatibility_dep,
     xkb_dep],
   install: get_option('install_demo'),
@@ -75,7 +75,7 @@ executable('libdecor-c++-demo',
   dependencies: [
     libdecor_dep,
     wayland_cursor_dep,
-    cursor_settings_dep,
+    desktop_settings_dep,
     os_compatibility_dep,
     xkb_dep],
   install: get_option('install_demo'),

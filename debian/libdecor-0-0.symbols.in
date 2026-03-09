@@ -45,11 +45,14 @@ libdecor-0.so.0 libdecor-0-0 #MINVER#
  libdecor_state_new@Base 0.1.0
  libdecor_unref@Base 0.1.0
 
+# In theory private to libdecor and its plugins, but libfltk1.4 uses these
+# (<https://bugs.debian.org/1111540>) and their ABI is unlikely to change
+ libdecor_frame_get_content_height@Base 0.1.0
+ libdecor_frame_get_content_width@Base 0.1.0
+
 # Private symbols
  libdecor_frame_dismiss_popup@Base 0 1
  libdecor_frame_get_capabilities@Base 0 1
- libdecor_frame_get_content_height@Base 0 1
- libdecor_frame_get_content_width@Base 0 1
  libdecor_frame_get_window_state@Base 0 1
  libdecor_frame_get_wl_surface@Base 0 1
  libdecor_frame_toplevel_commit@Base 0 1
