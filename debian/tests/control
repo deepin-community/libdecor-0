@@ -1,5 +1,9 @@
-Tests: libdecor-0-dev
-Restrictions: allow-stderr, build-needed, superficial
+Tests:
+ libdecor-0-dev,
+Restrictions:
+ allow-stderr,
+ build-needed,
+ superficial,
 Depends:
  build-essential,
  libdbus-1-dev,

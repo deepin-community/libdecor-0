@@ -21,8 +21,8 @@ fi
 srcdir="$(pwd)"
 cp obj-*/config.h "$WORKDIR"
 cp demo/demo.c "$WORKDIR"
-cp src/cursor-settings.h "$WORKDIR"
-cp src/cursor-settings.c "$WORKDIR"
+cp src/desktop-settings.h "$WORKDIR"
+cp src/desktop-settings.c "$WORKDIR"
 cp src/os-compatibility.c "$WORKDIR"
 cp src/os-compatibility.h "$WORKDIR"
 cp src/utils.h "$WORKDIR"
@@ -32,7 +32,7 @@ cd "$WORKDIR"
 
 "${CROSS_COMPILE}gcc" \
     -D_GNU_SOURCE \
-    cursor-settings.c \
+    desktop-settings.c \
     demo.c \
     os-compatibility.c \
     xdg-shell-protocol.c \

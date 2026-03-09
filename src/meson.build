@@ -67,16 +67,16 @@ foreach p: wayland_protocols
   )
 endforeach
 
-## cursor settings
-cursor_settings = static_library('cursor_settings',
-  sources: ['cursor-settings.c'],
+## desktop settings
+desktop_settings = static_library('desktop_settings',
+  sources: ['desktop-settings.c'],
   include_directories: [top_includepath],
   dependencies: [dbus_dep],
   gnu_symbol_visibility: 'hidden',
 )
 
-cursor_settings_dep = declare_dependency(
-  link_with: cursor_settings,
+desktop_settings_dep = declare_dependency(
+  link_with: desktop_settings,
   dependencies: [dbus_dep],
 )
 
@@ -104,7 +104,7 @@ libdecor = shared_library(libdecor_name,
   dependencies: [
     wayland_client_dep,
     dl_dep,
-    cursor_settings_dep,
+    desktop_settings_dep,
   ],
   install: true
 )

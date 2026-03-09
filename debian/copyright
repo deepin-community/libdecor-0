@@ -8,6 +8,7 @@ Copyright: 2010 Intel Corporation
            2017-2018 Red Hat Inc.
            2018-2019 Jonas Ådahl
            2019-2021 Christian Rauch
+           2024 Colin Kinloch
 License:   Expat
 
 Files:     src/plugins/common/libdecor-cairo-blur.*

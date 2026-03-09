@@ -123,6 +123,7 @@ struct libdecor_frame_private {
 
 	enum libdecor_window_state window_state;
 
+	bool has_decoration_mode;
 	enum zxdg_toplevel_decoration_v1_mode decoration_mode;
 
 	enum libdecor_capabilities capabilities;
@@ -276,12 +277,22 @@ frame_set_window_geometry(struct libdecor_frame *frame,
 	int x, y, width, height;
 	int left, right, top, bottom;
 
-	plugin->priv->iface->frame_get_border_size(plugin, frame, NULL,
-						   &left, &right, &top, &bottom);
-	x = -left;
-	y = -top;
-	width = content_width + left + right;
-	height = content_height + top + bottom;
+	if (frame_has_visible_client_side_decoration(frame) &&
+	    plugin->priv->iface->frame_get_border_size(plugin, frame,
+						       NULL,
+						       &left, &right,
+						       &top, &bottom)) {
+		x = -left;
+		y = -top;
+		width = content_width + left + right;
+		height = content_height + top + bottom;
+	} else {
+		x = 0;
+		y = 0;
+		width = content_width;
+		height = content_height;
+	}
+
 	xdg_surface_set_window_geometry(frame->priv->xdg_surface, x, y, width, height);
 }
 
@@ -474,7 +485,13 @@ toplevel_decoration_configure(
 		struct zxdg_toplevel_decoration_v1 *zxdg_toplevel_decoration_v1,
 		uint32_t mode)
 {
-	((struct libdecor_frame_private *)(data))->decoration_mode = mode;
+	struct libdecor_frame_private *frame_priv = (struct libdecor_frame_private *)data;
+	/* Ignore any _configure calls after the first, they will be
+	 * from our set_mode call. */
+	if (!frame_priv->has_decoration_mode) {
+		frame_priv->has_decoration_mode = true;
+		frame_priv->decoration_mode = mode;
+	}
 }
 
 static const struct zxdg_toplevel_decoration_v1_listener
@@ -606,9 +623,9 @@ libdecor_frame_unref(struct libdecor_frame *frame)
 		struct libdecor_plugin *plugin = context->plugin;
 
 		if (context->decoration_manager && frame_priv->toplevel_decoration) {
-        		zxdg_toplevel_decoration_v1_destroy(frame_priv->toplevel_decoration);
-        		frame_priv->toplevel_decoration = NULL;
-        	}
+			zxdg_toplevel_decoration_v1_destroy(frame_priv->toplevel_decoration);
+			frame_priv->toplevel_decoration = NULL;
+		}
 
 		wl_list_remove(&frame->link);
 
@@ -638,25 +655,26 @@ libdecor_frame_set_visibility(struct libdecor_frame *frame,
 
 	frame_priv->visible = visible;
 
-	/* enable/disable decorations that are managed by the compositor,
-	 * only xdg-decoration version 2 and above allows to toggle decoration */
+	/* enable/disable decorations that are managed by the compositor.
+	 * Note that, as of xdg_decoration v1, this is just a hint and there is
+	 * no reliable way of disabling all decorations. In practice this should
+	 * work but per spec this is not guaranteed.
+	 *
+	 * See also: https://gitlab.freedesktop.org/wayland/wayland-protocols/-/merge_requests/17
+	 */
 	if (context->decoration_manager &&
-	    zxdg_decoration_manager_v1_get_version(context->decoration_manager) > 1) {
-		if (frame_priv->visible &&
-		    frame_priv->toplevel_decoration == NULL) {
-			/* - request to SHOW decorations
-			 * - decorations are NOT HANDLED
-			 * => create new decorations for already mapped surface */
-			libdecor_frame_create_xdg_decoration(frame_priv);
-		} else if (!frame_priv->visible &&
-			 frame_priv->toplevel_decoration != NULL) {
-			/* - request to HIDE decorations
-			 * - decorations are HANDLED
-			 * => destroy decorations */
-			zxdg_toplevel_decoration_v1_destroy(frame_priv->toplevel_decoration);
-			frame_priv->toplevel_decoration = NULL;
-		}
+	    frame_priv->toplevel_decoration &&
+	    frame_priv->has_decoration_mode &&
+	    frame_priv->decoration_mode == ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE) {
+		zxdg_toplevel_decoration_v1_set_mode(frame_priv->toplevel_decoration,
+						     frame->priv->visible
+						     ? ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE
+						     : ZXDG_TOPLEVEL_DECORATION_V1_MODE_CLIENT_SIDE);
 	}
+
+	if (frame_priv->content_width <= 0 ||
+	    frame_priv->content_height <= 0)
+		return;
 
 	/* enable/disable decorations that are managed by a plugin */
 	if (frame_has_visible_client_side_decoration(frame)) {
@@ -689,10 +707,10 @@ libdecor_frame_set_parent(struct libdecor_frame *frame,
 	if (!frame_priv->xdg_toplevel)
 		return;
 
-	frame_priv->state.parent = parent->priv->xdg_toplevel;
+	frame_priv->state.parent = parent ? parent->priv->xdg_toplevel : NULL;
 
 	xdg_toplevel_set_parent(frame_priv->xdg_toplevel,
-				parent->priv->xdg_toplevel);
+				frame_priv->state.parent);
 }
 
 LIBDECOR_EXPORT void
@@ -1117,10 +1135,7 @@ libdecor_frame_apply_state(struct libdecor_frame *frame,
 	frame_priv->content_width = state->content_width;
 	frame_priv->content_height = state->content_height;
 
-	/* do not set limits in non-floating states */
-	if (state_is_floating(state->window_state)) {
-		libdecor_frame_apply_limits(frame, state->window_state);
-	}
+	libdecor_frame_apply_limits(frame, state->window_state);
 }
 
 LIBDECOR_EXPORT void
